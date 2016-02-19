@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="settingsStreamQualityArray">
+        <item>64 kbps</item>
+        <item>128 kbps</item>
+    </string-array>
+    <string-array name="settingsStreamQualityArrayValues">
+        <item>64kbps</item>
+        <item>128kbps</item>
+    </string-array>
+
+
+    <string-array name="settingsConnectionType">
+        <item>WIFI only</item>
+        <item>3G only</item>
+        <item>Both</item>
+    </string-array>
+    <string-array name="settingsConnectionTypeValues">
+        <item>WIFI</item>
+        <item>3G</item>
+        <item>Both</item>
+    </string-array>
+</resources>
