@@ -1,6 +1,7 @@
 package alsterradio2.com.example.mtracz.alsterradio_corrected;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -68,6 +69,11 @@ public class MainActivity extends Activity {
 
         Log.d("lifecycle", "onCreate");
 
+        buttonPlay = (Button) findViewById(R.id.buttonPlay);
+        textViewUsedNetworkData = (TextView) findViewById(R.id.textViewUsedNetworkData);
+        textViewSummaryReveivedData = (TextView) findViewById(R.id.textViewSummaryReceivedData);
+        textViewTimeFromStart = (TextView) findViewById(R.id.textViewSummaryTime);
+
         if(savedInstanceState != null) {
             numberOfClicks = savedInstanceState.getInt("numberOfClicks");
             isPlaying = savedInstanceState.getBoolean("isPlaying");
@@ -84,11 +90,6 @@ public class MainActivity extends Activity {
         }
 
         Log.d("numberOfClicks", String.valueOf(numberOfClicks));
-
-        buttonPlay = (Button) findViewById(R.id.buttonPlay);
-        textViewUsedNetworkData = (TextView) findViewById(R.id.textViewUsedNetworkData);
-        textViewSummaryReveivedData = (TextView) findViewById(R.id.textViewSummaryReceivedData);
-        textViewTimeFromStart = (TextView) findViewById(R.id.textViewSummaryTime);
 
         databaseDao = new DatabaseDAO(this);
 
@@ -166,9 +167,22 @@ public class MainActivity extends Activity {
             {
                 insertApproriateBytesToDatabase(intent);
             }
+            if(intent.getStringExtra(Constans.keyToRecognizeAction).equals(Constans.CHANGE_BUTTON_PLAY_STATE))
+            {
+                enableOrDisableButtonPlay(intent);
+            }
         }
 
     };
+
+    private void enableOrDisableButtonPlay(Intent intent) {
+        if(intent.getStringExtra(Constans.CHANGE_BUTTON_PLAY_STATE).equals(Constans.DISABLE)){
+            buttonPlay.setEnabled(false);
+        }
+        else {
+            buttonPlay.setEnabled(true);
+        }
+    }
 
     private void handleButtonPlayingState(Intent intent) {
         if (intent.getStringExtra(Constans.broadCastKey).contains(Constans.ACTION_START)) {
@@ -229,8 +243,27 @@ public class MainActivity extends Activity {
         }
         if(id == R.id.statistics)
         {
-            Toast.makeText(getApplicationContext(), "1h: " + BytesMapper.getUnderstableForm(getSummaryBytesCount(pManager) - Long.parseLong(databaseDao.getValuesFrom(String.valueOf(60*60*1000)))), Toast.LENGTH_SHORT).show();
-            Toast.makeText(getApplicationContext(), "24h: " + BytesMapper.getUnderstableForm(getSummaryBytesCount(pManager) - Long.parseLong(databaseDao.getValuesFrom(String.valueOf(24*60*60*1000)))), Toast.LENGTH_SHORT).show();
+            final Dialog dialog = new Dialog(this);
+            dialog.setContentView(R.layout.statistics_dialog);
+            dialog.setTitle("Statistics (may be inacurate)");
+            dialog.show();
+            TextView textView1Hour = (TextView) dialog.findViewById(R.id.textViewOneHour);
+            TextView textView24Hour = (TextView) dialog.findViewById(R.id.textView24Hours);
+            TextView textView7Days = (TextView) dialog.findViewById(R.id.textView7Days);
+
+            Button buttokOK = (Button) dialog.findViewById(R.id.statisticsButtonOK);
+
+            textView1Hour.setText(BytesMapper.getUnderstableForm(databaseDao.getLastBytesEntry().getLatestBytesCount() - Long.parseLong(databaseDao.getValuesFrom(String.valueOf(60*60*1000)))));
+            textView24Hour.setText(BytesMapper.getUnderstableForm(databaseDao.getLastBytesEntry().getLatestBytesCount() - Long.parseLong(databaseDao.getValuesFrom(String.valueOf(24*60*60*1000)))));
+            textView7Days.setText(BytesMapper.getUnderstableForm(databaseDao.getLastBytesEntry().getLatestBytesCount() - Long.parseLong(databaseDao.getValuesFrom(String.valueOf(7*24*60*60*1000)))));
+
+            buttokOK.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+
         }
 
 

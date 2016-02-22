@@ -54,6 +54,12 @@ public class MediaPlayerService extends Service{
 
     public void play()
     {
+        Intent intentForBroadcast = new Intent("mediaPlayerService");
+        intentForBroadcast.putExtra(Constans.keyToRecognizeAction, Constans.CHANGE_BUTTON_PLAY_STATE);
+        intentForBroadcast.putExtra(Constans.CHANGE_BUTTON_PLAY_STATE, Constans.DISABLE);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intentForBroadcast);
+
+
         mMediaPlayer = setApproriateStreamSource(mMediaPlayer);
         mMediaPlayer.prepareAsync();
 
@@ -65,6 +71,11 @@ public class MediaPlayerService extends Service{
                 @Override
                 public void onPrepared(MediaPlayer mp) {
                     mp.start();
+
+                    Intent intentForBroadcast = new Intent("mediaPlayerService");
+                    intentForBroadcast.putExtra(Constans.keyToRecognizeAction, Constans.CHANGE_BUTTON_PLAY_STATE);
+                    intentForBroadcast.putExtra(Constans.CHANGE_BUTTON_PLAY_STATE, Constans.ENABLE);
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentForBroadcast);
                 }
             });
         }
