@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.Calendar;
-import java.util.Date;
 
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Bytes;
 
@@ -137,7 +136,7 @@ public class DataDbAdapter {
             String action = c.getString(KEY_ACTION_COLUMN_NUMBER);
 
             Bytes toPressent = new Bytes(id, bytes, timeDB, action);
-            Log.d("toPresent", new Date(timeDB).toString());
+            //Log.d("toPresent", new Date(timeDB).toString() + ", " + String.valueOf(bytes));
 
             if(Calendar.getInstance().getTimeInMillis() - timeToCompare > timeDB)
             {

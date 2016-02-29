@@ -18,6 +18,7 @@ public class Constans {
     public static String ACTION_STOP = "stop";
 
     public static String alsterRadioStream64 = "http://live64.alsterradio.de";
+    public static String muzoStream = "http://stream4.nadaje.com/muzo";
     public static String alsterRadioStream128 = "http://live96.alsterradio.de";
 
     public static String broadCastKey = "broadcastKey";

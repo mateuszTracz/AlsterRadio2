@@ -162,6 +162,7 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             if (intent.getStringExtra(Constans.keyToRecognizeAction).equals(Constans.handleButtonPlaying)) {
                 handleButtonPlayingState(intent);
+                Log.d("BroadcastReceiver", "handleButtonPlayingState" + " /n" + intent.getStringExtra(Constans.broadCastKey));
             }
             if (intent.getStringExtra(Constans.keyToRecognizeAction).equals(Constans.STORE_IN_DATABASE))
             {
@@ -353,6 +354,7 @@ public class MainActivity extends Activity {
 
     private void changeButtonPlayState()
     {
+        Log.d("isPlaying", String.valueOf(isPlaying));
         if(isPlaying)
         {
             buttonPlay.setText("PLAY");
