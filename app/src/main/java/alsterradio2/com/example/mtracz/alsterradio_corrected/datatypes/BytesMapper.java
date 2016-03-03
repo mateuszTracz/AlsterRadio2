@@ -37,7 +37,7 @@ public class BytesMapper {
         if(x.indexOf('.') != -1 && x.length() - x.indexOf('.') > 3)
             return x.substring(0, x.indexOf('.')+3);
         else {
-            //TODO
+            //TODO - sometimes occurs - check it
             //if you see repaired on screen change this IMMEDIATELY
             return "repaired";
         }

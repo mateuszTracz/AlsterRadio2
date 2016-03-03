@@ -59,6 +59,8 @@ public class MediaPlayerService extends Service{
         intentForBroadcast.putExtra(Constans.CHANGE_BUTTON_PLAY_STATE, Constans.DISABLE);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intentForBroadcast);
 
+        MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled(true);
+
 
         mMediaPlayer = setApproriateStreamSource(mMediaPlayer);
         mMediaPlayer.prepareAsync();
@@ -76,6 +78,7 @@ public class MediaPlayerService extends Service{
                     intentForBroadcast.putExtra(Constans.keyToRecognizeAction, Constans.CHANGE_BUTTON_PLAY_STATE);
                     intentForBroadcast.putExtra(Constans.CHANGE_BUTTON_PLAY_STATE, Constans.ENABLE);
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentForBroadcast);
+                    MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled(false);
                 }
             });
         }

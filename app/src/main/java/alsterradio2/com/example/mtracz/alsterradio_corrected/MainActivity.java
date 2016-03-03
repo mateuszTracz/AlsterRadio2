@@ -121,6 +121,10 @@ public class MainActivity extends Activity {
 
         getFrequencyOfRefreshingDatabase();
 
+        if(MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled())
+        {
+            buttonPlay.setEnabled(false);
+        }
 
     }
 
@@ -239,6 +243,7 @@ public class MainActivity extends Activity {
         }
         if(id == R.id.statistics)
         {
+            //TODO new dialog class
             final Dialog dialog = new Dialog(this);
             dialog.setContentView(R.layout.statistics_dialog);
             dialog.setTitle("Statistics (may be inacurate)");
@@ -434,21 +439,21 @@ public class MainActivity extends Activity {
 
     private boolean isPlaying()
     {
-        return PlayerProperties.getInstance().isPlaying();
+        return MediaPlayerProperties.getInstance().isPlaying();
     }
 
     private void setIsPlaying(boolean isPlaying)
     {
-        PlayerProperties.getInstance().setIsPlaying(isPlaying);
+        MediaPlayerProperties.getInstance().setIsPlaying(isPlaying);
     }
 
     private int getNumberOfClicks()
     {
-        return PlayerProperties.getInstance().getNumberOfClicks();
+        return MediaPlayerProperties.getInstance().getNumberOfClicks();
     }
 
     private void increaseNumberOfClicks()
     {
-        PlayerProperties.getInstance().setNumberOfClicks(getNumberOfClicks()+1);
+        MediaPlayerProperties.getInstance().setNumberOfClicks(getNumberOfClicks()+1);
     }
 }
