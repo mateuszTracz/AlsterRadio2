@@ -36,21 +36,19 @@ import static alsterradio2.com.example.mtracz.alsterradio_corrected.ManageNetwor
 
 public class MainActivity extends Activity {
 
-    private static int numberOfClicks;
     private Button buttonPlay;
     private int requestCodeForSettingsActivity = 0;
     private int frequencyOfRefreshingDatabase;
-    private static boolean isPlaying = false;
-    private TextView textViewUsedNetworkData;
-    private TextView textViewSummaryReveivedData;
+    private static TextView textViewUsedNetworkData;
+    private static TextView textViewSummaryReveivedData;
     private static TextView textViewTimeFromStart;
 
     private PackageManager pManager;
 
     private long bytesOnStartApplication, bytesUsedAtTheMoment;
     
-    private Handler dataHandler;
-    private Runnable dataRunnable;
+    private static Handler dataHandler;
+    private static Runnable dataRunnable;
     private long summaryBytesCount;
     private long summaryTime;
 
@@ -69,50 +67,49 @@ public class MainActivity extends Activity {
 
         Log.d("lifecycle", "onCreate");
 
+        PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.preferences, true);
+
         buttonPlay = (Button) findViewById(R.id.buttonPlay);
         textViewUsedNetworkData = (TextView) findViewById(R.id.textViewUsedNetworkData);
         textViewSummaryReveivedData = (TextView) findViewById(R.id.textViewSummaryReceivedData);
         textViewTimeFromStart = (TextView) findViewById(R.id.textViewSummaryTime);
 
         if(savedInstanceState != null) {
-            numberOfClicks = savedInstanceState.getInt("numberOfClicks");
-            isPlaying = savedInstanceState.getBoolean("isPlaying");
-
             bytesOnStartApplication = savedInstanceState.getLong("bytesOnStartApplication");
             textViewUsedNetworkData.setText(savedInstanceState.getString("alreadyUsedData"));
             summaryTime = savedInstanceState.getLong("summaryTime");
 
-            if (numberOfClicks % 2 == 0) {
-                buttonPlay.setText("PLAY");
-            } else {
+            if (isPlaying()) {
                 buttonPlay.setText("STOP");
+            } else {
+                buttonPlay.setText("PLAY");
             }
         }
-
-        Log.d("numberOfClicks", String.valueOf(numberOfClicks));
 
         databaseDao = new DatabaseDAO(this);
 
         pManager = this.getPackageManager();
-        initializeDataHandler();
+
+        if(dataHandler == null)
+            initializeDataHandler();
+
         initializeDatabaseRefreshingHandler();
 
         if(timeHandler == null)
             initializeTimeHandler();
 
 
-        if(savedInstanceState == null) // Nur wenn Anwendung erst gestarted ist
+        if(getNumberOfClicks() == 0)
         {
-            if(numberOfClicks == 0)
-            {
-                startService(createApproriateIntent(""));
+            startService(createApproriateIntent(""));
+            Log.d("onCreate", "startService");
+            if(!isPlaying()) {
+               Log.d("onCreate", "buttonPlay.click");
+               buttonPlay.performClick();
             }
-            if(!isPlaying) {
-                Log.d("buttonClick", "buttonPlay.click");
-                buttonPlay.performClick();
-            }
-            bytesOnStartApplication = getSummaryBytesCount(pManager);
         }
+        bytesOnStartApplication = getSummaryBytesCount(pManager);
+
 
         if (databaseDao.getAllBytesCount() != 0) {
             summaryBytesCount = databaseDao.getLastBytesEntry().getLatestBytesCount();
@@ -124,7 +121,7 @@ public class MainActivity extends Activity {
 
         getFrequencyOfRefreshingDatabase();
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("mediaPlayerService"));
+
     }
 
     private void getFrequencyOfRefreshingDatabase() {
@@ -190,6 +187,7 @@ public class MainActivity extends Activity {
             if (buttonPlay.getText().toString().equals("STOP")) {
                 changeButtonPlayState();
                 timeHandler.removeCallbacks(timeRunnable);
+                dataHandler.removeCallbacks(dataRunnable);
                 refreshingDatabaseHandler.removeCallbacks(refreshingDatabaseRunnable);
             }
         } else {
@@ -197,6 +195,7 @@ public class MainActivity extends Activity {
                 if (buttonPlay.getText().toString().equals("PLAY")) {
                     changeButtonPlayState();
                     timeHandler.postDelayed(timeRunnable, 1000);
+                    dataHandler.postDelayed(dataRunnable, 500);
                     refreshingDatabaseHandler.postDelayed(refreshingDatabaseRunnable, frequencyOfRefreshingDatabase*60*1000);
                 }
             }
@@ -238,10 +237,6 @@ public class MainActivity extends Activity {
             startActivityForResult(i, requestCodeForSettingsActivity);
             return true;
         }
-        if(id == R.id.requestPost)
-        {
-
-        }
         if(id == R.id.statistics)
         {
             final Dialog dialog = new Dialog(this);
@@ -266,7 +261,10 @@ public class MainActivity extends Activity {
             });
 
         }
+        if(id == R.id.addStream)
+        {
 
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -275,7 +273,9 @@ public class MainActivity extends Activity {
 
     public void play(View view)
     {
-        if (numberOfClicks % 2 == 0)
+        Log.d("numberOfClicks", String.valueOf(getNumberOfClicks()));
+
+        if (getNumberOfClicks() % 2 == 0)
             play();
         else
             stop();
@@ -287,8 +287,8 @@ public class MainActivity extends Activity {
         {
             buttonPlay.setText("STOP");
             startService(createApproriateIntent(Constans.ACTION_START));
-            numberOfClicks++;
-            isPlaying = true;
+            increaseNumberOfClicks();
+            setIsPlaying(true);
 
             dataHandler.postDelayed(dataRunnable, 0);
             timeHandler.postDelayed(timeRunnable, 1000);
@@ -305,8 +305,8 @@ public class MainActivity extends Activity {
     {
         startService(createApproriateIntent(Constans.ACTION_STOP));
         buttonPlay.setText("PLAY");
-        numberOfClicks++;
-        isPlaying = false;
+        increaseNumberOfClicks();
+        setIsPlaying(false);
 
         dataHandler.removeCallbacks(dataRunnable);
         timeHandler.removeCallbacks(timeRunnable);
@@ -354,29 +354,27 @@ public class MainActivity extends Activity {
 
     private void changeButtonPlayState()
     {
-        Log.d("isPlaying", String.valueOf(isPlaying));
-        if(isPlaying)
+
+        if(isPlaying())
         {
             buttonPlay.setText("PLAY");
-            isPlaying = false;
+            setIsPlaying(false);
         }
         else
         {
             buttonPlay.setText("STOP");
-            isPlaying = true;
+            setIsPlaying(true);
         }
-        numberOfClicks++;
+        increaseNumberOfClicks();
     }
 
     public void onSaveInstanceState(Bundle bundle)
     {
         Log.d("onSaveInstanceState", "called");
 
-        bundle.putInt("numberOfClicks", numberOfClicks);
         bundle.putString("alreadyUsedData", textViewUsedNetworkData.getText().toString());
         bundle.putLong("bytesOnStartApplication", bytesOnStartApplication);
         bundle.putLong("summaryTime", summaryTime);
-        bundle.putBoolean("isPlaying", isPlaying);
     }
 
     private void initializeDataHandler() {
@@ -406,20 +404,23 @@ public class MainActivity extends Activity {
         dataHandler.postDelayed(dataRunnable, 0);
         synchronizeButtonPlay();
         getFrequencyOfRefreshingDatabase();
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("mediaPlayerService"));
+
         super.onResume();
     }
 
     private void synchronizeButtonPlay() {
-        if(isPlaying && buttonPlay.getText().toString().equals("PLAY"))
+        if(isPlaying())
             buttonPlay.setText("STOP");
-        else if(!isPlaying && buttonPlay.getText().toString().contains("STOP"))
+        else if(!isPlaying())
             buttonPlay.setText("PLAY");
     }
 
     public void onStop()
     {
         databaseDao.insertBytes(new Bytes(1, summaryBytesCount + bytesUsedAtTheMoment, Calendar.getInstance().getTimeInMillis(), Constans.ACTION_STOP));
-        Toast.makeText(getApplicationContext(), Constans.ACTION_STOP, Toast.LENGTH_SHORT).show();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         Log.d("lifecycle", "onStop");
         super.onStop();
     }
@@ -429,5 +430,25 @@ public class MainActivity extends Activity {
         Log.d("lifecycle", "onDestroy");
 
         super.onDestroy();
+    }
+
+    private boolean isPlaying()
+    {
+        return PlayerProperties.getInstance().isPlaying();
+    }
+
+    private void setIsPlaying(boolean isPlaying)
+    {
+        PlayerProperties.getInstance().setIsPlaying(isPlaying);
+    }
+
+    private int getNumberOfClicks()
+    {
+        return PlayerProperties.getInstance().getNumberOfClicks();
+    }
+
+    private void increaseNumberOfClicks()
+    {
+        PlayerProperties.getInstance().setNumberOfClicks(getNumberOfClicks()+1);
     }
 }

@@ -140,29 +140,19 @@ public class MediaPlayerService extends Service{
 
     private String getRequestedStreamKind() {
         SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        return sh.getString("streamQuality", "error");
+        return sh.getString("streamSelected", "error");
     }
 
     private MediaPlayer setApproriateStreamSource(MediaPlayer mediaPlayer)
     {
         String streamQuality = getRequestedStreamKind();
+        Log.d("streamQuality", streamQuality);
 
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        if(streamQuality.equals("64kbps"))
-        {
-            try {
-                mediaPlayer.setDataSource(Constans.alsterRadioStream64);
-            } catch (IOException e) {
-                Log.d("A fatal error occured.", e.toString());
-            }
-        }
-        else if(streamQuality.equals("128kbps") || streamQuality.equals("error"))
-        {
-            try {
-                mediaPlayer.setDataSource(Constans.alsterRadioStream128);
-            } catch (IOException e) {
-                Log.d("A fatal error occured.", e.toString());
-            }
+        try {
+            mediaPlayer.setDataSource(streamQuality);
+        } catch (IOException e) {
+            Log.d("Fatal error occured", e.toString());
         }
         return mediaPlayer;
     }

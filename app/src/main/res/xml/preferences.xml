@@ -1,14 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <ListPreference
-        android:key="streamQuality"
-        android:title="@string/settingsStreamQuality"
-        android:defaultValue="128kbps"
-        android:entries="@array/settingsStreamQualityArray"
-        android:entryValues="@array/settingsStreamQualityArrayValues"
-        />
-
-    <ListPreference
         android:key="connectionType"
         android:title="@string/settingsConnectionType"
         android:defaultValue="3G"
@@ -16,11 +8,28 @@
         android:entryValues="@array/settingsConnectionTypeValues"
         />
 
+    <ListPreference
+        android:key="radioStreamList"
+        android:title="Streams:"
+        android:defaultValue="AlsterRadio 128 kbps"
+        android:entries="@array/radioStreamKind"
+        android:entryValues="@array/radioStreamKindUrls"
+
+        />
+
     <EditTextPreference
         android:key="refreshingDatabaseFrequency"
         android:title="Database refreshing (min)"
         android:defaultValue="1"
         android:inputType="number"
+        />
+
+    <ListPreference
+        android:key="streamSelected"
+        android:title="Selected stream"
+        android:entries="@string/defaultSelectedStream"
+        android:defaultValue="http://live96.alsterradio.de"
+        android:enabled="false"
         />
 
 </PreferenceScreen>
