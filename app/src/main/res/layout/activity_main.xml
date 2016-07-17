@@ -43,5 +43,13 @@
         android:layout_alignRight="@+id/textViewUsedNetworkData"
         android:layout_alignEnd="@+id/textViewUsedNetworkData" />
 
+    <Button
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:id="@+id/buttonAddSongToFavourite"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/ic_favorite_black_24dp" />
+
 
 </RelativeLayout>

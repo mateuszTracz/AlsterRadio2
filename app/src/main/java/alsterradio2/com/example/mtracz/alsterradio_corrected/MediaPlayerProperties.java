@@ -6,11 +6,21 @@ package alsterradio2.com.example.mtracz.alsterradio_corrected;
 public class MediaPlayerProperties {
     private static MediaPlayerProperties instance;
 
-    private boolean isPlaying, shouldButtonPlayBeDisabled = false;
+    private boolean isPlaying;
+    private boolean shouldButtonPlayBeDisabled = false;
+
+    public boolean isTimerStarted() {
+        return isTimerStarted;
+    }
+
+    public void setTimerStarted(boolean isTimerStarted) {
+        this.isTimerStarted = isTimerStarted;
+    }
+
+    private boolean isTimerStarted=false;
     private int numberOfClicks = 0;
 
-    public static MediaPlayerProperties getInstance()
-    {
+    public static MediaPlayerProperties getInstance(){
         if (instance == null) {
             instance = new MediaPlayerProperties();
             return instance;
@@ -42,8 +52,8 @@ public class MediaPlayerProperties {
         this.isPlaying = isPlaying;
     }
 
-    public void setNumberOfClicks(int numberOfClicks)
-    {
+    public void setNumberOfClicks(int numberOfClicks){
         this.numberOfClicks = numberOfClicks;
     }
+
 }

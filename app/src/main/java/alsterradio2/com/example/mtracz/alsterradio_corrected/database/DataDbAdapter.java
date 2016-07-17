@@ -49,6 +49,33 @@ public class DataDbAdapter {
 
     private static String DB_DROP_BYTES_TABLE = "DROP IF EXISTS " + DB_BYTES_TABLE;
 
+    // Second table Favourite Songs
+    private static String DB_FAVOURITE_SONGS_TABLE ="favouriteSongsTable";
+
+    private static String KEY_SONG_ID = "songKey";
+    private static String SONG_OPTIONS = "INTEGER PRIMARY KEY AUTOINCREMENT";
+    private static int SONG_ID_COLUMN_NUMBER = 0;
+
+    private static String KEY_SONG_TIMESTAMP = "songTimestamp";
+    private static String SONG_TIMESTAMP_OPTIONS = "TEXT";
+    private static int SONG_TIMESTAMP_COLUMN_NUMBER = 1;
+
+    private static String KEY_SONG_PLAYED_BY = "songPlayedBy";
+    private static String SONG_PLAYED_BY_OPTIONS = "TEXT";
+    private static int SONG_PLAYED_BY_COLUMN_NUMBER = 2;
+
+    private static String KEY_SONG_TITLE = "songTitle";
+    private static String SONG_TITLE_OPTIONS = "TEXT";
+    private static int SONG_TITLE_COLUMN_NUMBER = 3;
+
+    private static String DB_CREATE_SONGS_TABlE = "CREATE TABLE " + DB_FAVOURITE_SONGS_TABLE + " (" +
+            KEY_SONG_ID + " " + SONG_OPTIONS + ", " +
+            KEY_SONG_TIMESTAMP + " " + SONG_TIMESTAMP_OPTIONS + ", "+
+            KEY_SONG_PLAYED_BY + " " + SONG_PLAYED_BY_OPTIONS + ", "+
+            KEY_SONG_TITLE + " " + SONG_TITLE_OPTIONS + ");";
+
+    private static String DB_DROP_SONG_TABLE = "DROP IF EXISTS " + DB_FAVOURITE_SONGS_TABLE;
+
     private SQLiteDatabase db;
     private Context context;
     private DatabaseHelper dbHelper;
@@ -77,6 +104,14 @@ public class DataDbAdapter {
         newTodoValues.put(KEY_TIME, time);
         newTodoValues.put(KEY_ACTION, action);
         return db.insert(DB_BYTES_TABLE, null, newTodoValues);
+    }
+
+    public long insertSong(String timestamp, String playedBy, String title){
+        ContentValues newSong = new ContentValues();
+        newSong.put(KEY_SONG_TIMESTAMP, timestamp);
+        newSong.put(KEY_SONG_PLAYED_BY, playedBy);
+        newSong.put(KEY_SONG_TITLE, title);
+        return db.insert(DB_FAVOURITE_SONGS_TABLE, null, newSong);
     }
 
     public boolean updateBytes(Bytes bytes) {
@@ -178,16 +213,20 @@ public class DataDbAdapter {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(DB_CREATE_BYTES_TABLE);
+            db.execSQL(DB_CREATE_SONGS_TABlE);
             Log.d(DEBUG_TAG, "Creating database");
             Log.d(DEBUG_TAG, "Table " + DB_BYTES_TABLE + " ver. " + DB_VERSION + " created");
+            Log.d(DEBUG_TAG, "Table " + DB_FAVOURITE_SONGS_TABLE + " ver. " + DB_VERSION + " created");
+
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             db.execSQL(DB_DROP_BYTES_TABLE);
-
+            db.execSQL(DB_DROP_SONG_TABLE);
             Log.d(DEBUG_TAG, "Database updating...");
             Log.d("SqLite", "Table " + DB_BYTES_TABLE + " updated from ver. " + oldVersion + " to ver. " + newVersion);
+            Log.d("SqLite", "Table " + DB_FAVOURITE_SONGS_TABLE + " updated from ver. " + oldVersion + " to ver. " + newVersion);
 
             onCreate(db);
         }

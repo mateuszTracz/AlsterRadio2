@@ -8,14 +8,6 @@
         android:entryValues="@array/settingsConnectionTypeValues"
         />
 
-    <ListPreference
-        android:key="radioStreamList"
-        android:title="Streams:"
-        android:defaultValue="AlsterRadio 128 kbps"
-        android:entries="@array/radioStreamKind"
-        android:entryValues="@array/radioStreamKindUrls"
-
-        />
 
     <EditTextPreference
         android:key="refreshingDatabaseFrequency"
@@ -24,12 +16,13 @@
         android:inputType="number"
         />
 
-    <ListPreference
-        android:key="streamSelected"
-        android:title="Selected stream"
-        android:entries="@string/defaultSelectedStream"
-        android:defaultValue="http://live96.alsterradio.de"
-        android:enabled="false"
+    <EditTextPreference
+        android:key="updatingMainNotificationFrequency"
+        android:title="Notification update (sec)"
+        android:defaultValue="30"
+        android:inputType="number"
         />
+
+
 
 </PreferenceScreen>

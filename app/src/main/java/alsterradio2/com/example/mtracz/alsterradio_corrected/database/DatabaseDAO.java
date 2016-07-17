@@ -3,6 +3,7 @@ package alsterradio2.com.example.mtracz.alsterradio_corrected.database;
 import android.content.Context;
 
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Bytes;
+import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Song;
 
 /**
  * Created by mtracz on 09.Feb.2016.
@@ -29,6 +30,13 @@ public class DatabaseDAO {
     {
         dbAdapter.open();
         long id =  dbAdapter.insertBytes(String.valueOf(bytes.getLatestBytesCount()), String.valueOf(bytes.getTime()), bytes.getAction());
+        dbAdapter.close();
+        return id;
+    }
+
+    public long insertSong(Song song){
+        dbAdapter.open();
+        long id = dbAdapter.insertSong(song.getTimestamp(), song.getSongPlayedBy(), song.getTitle());
         dbAdapter.close();
         return id;
     }

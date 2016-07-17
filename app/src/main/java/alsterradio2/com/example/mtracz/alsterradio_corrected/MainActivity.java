@@ -24,19 +24,22 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 import alsterradio2.com.example.mtracz.alsterradio_corrected.database.DatabaseDAO;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Bytes;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.BytesMapper;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Constans;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.TimeMapper;
+import alsterradio2.com.example.mtracz.alsterradio_corrected.utils.Utils;
 
 import static alsterradio2.com.example.mtracz.alsterradio_corrected.ManageNetworkUse.getSummaryBytesCount;
 
 
 public class MainActivity extends Activity {
 
-    private Button buttonPlay;
+    private static Button buttonPlay;
     private int requestCodeForSettingsActivity = 0;
     private int frequencyOfRefreshingDatabase;
     private static TextView textViewUsedNetworkData;
@@ -55,8 +58,12 @@ public class MainActivity extends Activity {
     private static Handler timeHandler;
     private static Runnable timeRunnable;
 
-    private Handler refreshingDatabaseHandler;
-    private Runnable refreshingDatabaseRunnable;
+    private static Handler refreshingDatabaseHandler;
+    private static Runnable refreshingDatabaseRunnable;
+
+    private static Handler updatingMainNotificationHandler;
+    private static Runnable updatingMainNotificationRunnable;
+    private int frequencyOfUpdatingMainNotification; //seconds
 
     private DatabaseDAO databaseDao;
 
@@ -74,16 +81,12 @@ public class MainActivity extends Activity {
         textViewSummaryReveivedData = (TextView) findViewById(R.id.textViewSummaryReceivedData);
         textViewTimeFromStart = (TextView) findViewById(R.id.textViewSummaryTime);
 
+
+
         if(savedInstanceState != null) {
             bytesOnStartApplication = savedInstanceState.getLong("bytesOnStartApplication");
             textViewUsedNetworkData.setText(savedInstanceState.getString("alreadyUsedData"));
             summaryTime = savedInstanceState.getLong("summaryTime");
-
-            if (isPlaying()) {
-                buttonPlay.setText("STOP");
-            } else {
-                buttonPlay.setText("PLAY");
-            }
         }
 
         databaseDao = new DatabaseDAO(this);
@@ -93,21 +96,30 @@ public class MainActivity extends Activity {
         if(dataHandler == null)
             initializeDataHandler();
 
-        initializeDatabaseRefreshingHandler();
+        if (refreshingDatabaseHandler == null)
+            initializeDatabaseRefreshingHandler();
 
-        if(timeHandler == null)
+        if(timeHandler == null) {
             initializeTimeHandler();
+        }
 
+        if(updatingMainNotificationHandler == null)
+            initializeUpdatingMainNotificationHandler();
 
-        if(getNumberOfClicks() == 0)
+        if(Utils.getNumberOfClicks() == 0)
         {
-            startService(createApproriateIntent(""));
+            Intent intentForInitializePlayingService = new Intent(this, MediaPlayerService.class);
+            intentForInitializePlayingService.setAction("");
+            startService(intentForInitializePlayingService);
+
+
             Log.d("onCreate", "startService");
             if(!isPlaying()) {
                Log.d("onCreate", "buttonPlay.click");
                buttonPlay.performClick();
             }
         }
+
         bytesOnStartApplication = getSummaryBytesCount(pManager);
 
 
@@ -119,18 +131,25 @@ public class MainActivity extends Activity {
 
         textViewTimeFromStart.setText(TimeMapper.getTimeFormatted(summaryTime));
 
-        getFrequencyOfRefreshingDatabase();
+        synchronizeValuesFromSettings();
 
-        if(MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled())
+        SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sh.edit();
+        Set<String> set = sh.getStringSet(Constans.ALL_STREAM_SET, new HashSet<String>());
+        if(set.size() == 0)
         {
-            buttonPlay.setEnabled(false);
+            set.add("(" + Constans.alsterRadioStream128+")AlsterRadio");
+            editor.putStringSet(Constans.ALL_STREAM_SET, set);
+            editor.putString(Constans.SELECTED_STREAM, Constans.alsterRadioStream128);
+            editor.putString(Constans.SELECTED_STREAM_NAME, "AlsterRadio");
+            editor.commit();
         }
-
     }
 
-    private void getFrequencyOfRefreshingDatabase() {
+    private void synchronizeValuesFromSettings() {
         SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         frequencyOfRefreshingDatabase = Integer.parseInt(sh.getString("refreshingDatabaseFrequency", "1"));
+        frequencyOfUpdatingMainNotification = Integer.parseInt(sh.getString("updatingMainNotificationFrequency", "30"));
     }
 
     private void initializeDatabaseRefreshingHandler() {
@@ -158,12 +177,24 @@ public class MainActivity extends Activity {
         };
     }
 
+    private void initializeUpdatingMainNotificationHandler(){
+        updatingMainNotificationHandler = new Handler();
+        updatingMainNotificationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                new GetMetadataTask(getApplicationContext(), true).execute(Utils.getActuallySelectedStreamURL(getApplicationContext()));
+                Utils.updateNotification(getApplicationContext());
+                updatingMainNotificationHandler.postDelayed(this, frequencyOfUpdatingMainNotification*1000);
+            }
+        };
+    }
+
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getStringExtra(Constans.keyToRecognizeAction).equals(Constans.handleButtonPlaying)) {
-                handleButtonPlayingState(intent);
-                Log.d("BroadcastReceiver", "handleButtonPlayingState" + " /n" + intent.getStringExtra(Constans.broadCastKey));
+                synchronizeButtonPlay();
+                handleHandlersState(intent);
             }
             if (intent.getStringExtra(Constans.keyToRecognizeAction).equals(Constans.STORE_IN_DATABASE))
             {
@@ -177,6 +208,23 @@ public class MainActivity extends Activity {
 
     };
 
+    private void handleHandlersState(Intent intent) {
+            if(intent.getStringExtra(Constans.broadCastKey).equals(Constans.ACTION_START)) {
+                if(MediaPlayerProperties.getInstance().isTimerStarted()) {
+                    timeHandler.removeCallbacks(timeRunnable);
+                    MediaPlayerProperties.getInstance().setTimerStarted(false);
+                }
+
+            }
+            else {
+                if(!MediaPlayerProperties.getInstance().isTimerStarted()) {
+                    timeHandler.postDelayed(timeRunnable, 1000);
+                    MediaPlayerProperties.getInstance().setTimerStarted(true);
+                }
+
+            }
+    }
+
     private void enableOrDisableButtonPlay(Intent intent) {
         if(intent.getStringExtra(Constans.CHANGE_BUTTON_PLAY_STATE).equals(Constans.DISABLE)){
             buttonPlay.setEnabled(false);
@@ -186,25 +234,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void handleButtonPlayingState(Intent intent) {
-        if (intent.getStringExtra(Constans.broadCastKey).contains(Constans.ACTION_START)) {
-            if (buttonPlay.getText().toString().equals("STOP")) {
-                changeButtonPlayState();
-                timeHandler.removeCallbacks(timeRunnable);
-                dataHandler.removeCallbacks(dataRunnable);
-                refreshingDatabaseHandler.removeCallbacks(refreshingDatabaseRunnable);
-            }
-        } else {
-            if (intent.getStringExtra(Constans.broadCastKey).contains(Constans.ACTION_STOP)) {
-                if (buttonPlay.getText().toString().equals("PLAY")) {
-                    changeButtonPlayState();
-                    timeHandler.postDelayed(timeRunnable, 1000);
-                    dataHandler.postDelayed(dataRunnable, 500);
-                    refreshingDatabaseHandler.postDelayed(refreshingDatabaseRunnable, frequencyOfRefreshingDatabase*60*1000);
-                }
-            }
-        }
-    }
 
     private void insertApproriateBytesToDatabase(Intent intent)
     {
@@ -229,7 +258,8 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean
+    onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.preferences.
@@ -268,19 +298,32 @@ public class MainActivity extends Activity {
         }
         if(id == R.id.addStream)
         {
-
+            AddStreamDialog dialog = new AddStreamDialog();
+            dialog.show(getFragmentManager(), "add stream");
         }
-
+        if(id == R.id.changeStream)
+        {
+            ChangeStreamDialog dialog = new ChangeStreamDialog();
+            dialog.setContext(getApplicationContext());
+            dialog.show(getFragmentManager(), " change stream");
+        }
+        if(id == R.id.streamData)
+        {
+            new GetMetadataTask(getApplicationContext(), false).execute(Utils.getActuallySelectedStreamURL(getApplicationContext()));
+        }
+        if(id == R.id.closeApp)
+        {
+            Utils.stopPlaying(getApplicationContext());
+            this.finish();
+            System.exit(0);
+        }
         return super.onOptionsItemSelected(item);
     }
 
-
-
     public void play(View view)
     {
-        Log.d("numberOfClicks", String.valueOf(getNumberOfClicks()));
 
-        if (getNumberOfClicks() % 2 == 0)
+        if (Utils.getNumberOfClicks() % 2 == 0)
             play();
         else
             stop();
@@ -291,14 +334,18 @@ public class MainActivity extends Activity {
         if(isThereApproriateInternetConnection(getApproriateFlagToRecognizeInternetConnection()))
         {
             buttonPlay.setText("STOP");
-            startService(createApproriateIntent(Constans.ACTION_START));
-            increaseNumberOfClicks();
+            Utils.startPlaying(getApplicationContext());
             setIsPlaying(true);
 
             dataHandler.postDelayed(dataRunnable, 0);
-            timeHandler.postDelayed(timeRunnable, 1000);
-            refreshingDatabaseHandler.postDelayed(refreshingDatabaseRunnable, frequencyOfRefreshingDatabase*60*1000);
+            updatingMainNotificationHandler.postDelayed(updatingMainNotificationRunnable, frequencyOfUpdatingMainNotification*1000);
 
+            if(!MediaPlayerProperties.getInstance().isTimerStarted()) {
+                timeHandler.postDelayed(timeRunnable, 1000);
+                MediaPlayerProperties.getInstance().setTimerStarted(true);
+            }
+
+          refreshingDatabaseHandler.postDelayed(refreshingDatabaseRunnable, frequencyOfRefreshingDatabase*60*1000);
         }
         else
         {
@@ -308,13 +355,19 @@ public class MainActivity extends Activity {
 
     public void stop()
     {
-        startService(createApproriateIntent(Constans.ACTION_STOP));
+        Utils.stopPlaying(getApplicationContext());
         buttonPlay.setText("PLAY");
-        increaseNumberOfClicks();
         setIsPlaying(false);
 
         dataHandler.removeCallbacks(dataRunnable);
-        timeHandler.removeCallbacks(timeRunnable);
+        updatingMainNotificationHandler.removeCallbacks(updatingMainNotificationRunnable);
+
+        if(MediaPlayerProperties.getInstance().isTimerStarted()) {
+            timeHandler.removeCallbacks(timeRunnable);
+            MediaPlayerProperties.getInstance().setTimerStarted(false);
+        }
+
+
         refreshingDatabaseHandler.removeCallbacks(refreshingDatabaseRunnable);
         //blinkingTimeHandler.postDelayed(blinkingTimeRunnable, 500);
     }
@@ -347,19 +400,12 @@ public class MainActivity extends Activity {
 
     private String getRequestedConnectionType() {
         SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(this);
-        return sh.getString("connectionType", "error");
-    }
 
-    private Intent createApproriateIntent(String action)
-    {
-        Intent intent = new Intent(this, MediaPlayerService.class);
-        intent.setAction(action);
-        return intent;
+        return sh.getString("connectionType", "error");
     }
 
     private void changeButtonPlayState()
     {
-
         if(isPlaying())
         {
             buttonPlay.setText("PLAY");
@@ -370,7 +416,7 @@ public class MainActivity extends Activity {
             buttonPlay.setText("STOP");
             setIsPlaying(true);
         }
-        increaseNumberOfClicks();
+        Utils.increaseNumberOfClicks();
     }
 
     public void onSaveInstanceState(Bundle bundle)
@@ -405,10 +451,10 @@ public class MainActivity extends Activity {
 
     public void onResume()
     {
-        Log.d("lifecycle", "onResume");
+        Log.d("lifecycle", "onResume ");
         dataHandler.postDelayed(dataRunnable, 0);
         synchronizeButtonPlay();
-        getFrequencyOfRefreshingDatabase();
+        synchronizeValuesFromSettings();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("mediaPlayerService"));
 
@@ -416,10 +462,16 @@ public class MainActivity extends Activity {
     }
 
     private void synchronizeButtonPlay() {
-        if(isPlaying())
+        if(Utils.getNumberOfClicks() % 2 != 0){
             buttonPlay.setText("STOP");
-        else if(!isPlaying())
+        }
+        else{
             buttonPlay.setText("PLAY");
+        }
+
+
+        boolean shouldButtonPlayBeEnabled = !MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled();
+        buttonPlay.setEnabled(shouldButtonPlayBeEnabled);
     }
 
     public void onStop()
@@ -433,7 +485,6 @@ public class MainActivity extends Activity {
     public void onDestroy()
     {
         Log.d("lifecycle", "onDestroy");
-
         super.onDestroy();
     }
 
@@ -447,13 +498,5 @@ public class MainActivity extends Activity {
         MediaPlayerProperties.getInstance().setIsPlaying(isPlaying);
     }
 
-    private int getNumberOfClicks()
-    {
-        return MediaPlayerProperties.getInstance().getNumberOfClicks();
-    }
 
-    private void increaseNumberOfClicks()
-    {
-        MediaPlayerProperties.getInstance().setNumberOfClicks(getNumberOfClicks()+1);
-    }
 }

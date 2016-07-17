@@ -8,11 +8,24 @@
         android:title="Add Stream"/>
 
 
+    <item
+        android:id="@+id/changeStream"
+        android:title="Change Stream" />
 
+    <item
+        android:id="@+id/streamData"
+        android:title="Metadata"
 
+        />
     <item
         android:id="@+id/statistics"
         android:title="Statistics"
         android:orderInCategory="101" />
+
+    <item
+        android:id="@+id/closeApp"
+        android:title="Close"
+        android:orderInCategory="102"
+        />
 
 </menu>
