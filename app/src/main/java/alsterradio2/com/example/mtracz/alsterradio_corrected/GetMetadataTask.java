@@ -1,9 +1,11 @@
 package alsterradio2.com.example.mtracz.alsterradio_corrected;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -12,9 +14,9 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
 
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Constans;
+import alsterradio2.com.example.mtracz.alsterradio_corrected.utils.Utils;
 
 /**
  * Created by MTRACZ on 31.Mrz.2016.
@@ -22,13 +24,13 @@ import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Constans;
 public class GetMetadataTask extends AsyncTask<String, Integer, String> {
     private String metadata;
     private Context context;
-    private boolean wasCalledByHandler = false;
+    private Constans.MetadataCalledBy calledBy;
 
-    public GetMetadataTask(Context context, boolean wasCalledByHanler)
+    public GetMetadataTask(Context context, Constans.MetadataCalledBy calledBy)
     {
         super();
         this.context = context;
-        this.wasCalledByHandler = wasCalledByHanler;
+        this.calledBy = calledBy;
     }
 
     @Override
@@ -76,13 +78,12 @@ public class GetMetadataTask extends AsyncTask<String, Integer, String> {
             }
 
             String metaData = new String(bytes);
-            ArrayList<Character> meta = new ArrayList<Character>();
-
 
             Log.d("Probalby metadata: ", metaData);
             int index = metaData.indexOf('\'')+1;
+            int endIndex = metaData.lastIndexOf("\'");
             try {
-                toDisplay = metaData.substring(index, metaData.indexOf('\'', index + 1));
+                toDisplay = metaData.substring(index, endIndex);
             }
             catch(Exception e)
             {
@@ -101,11 +102,23 @@ public class GetMetadataTask extends AsyncTask<String, Integer, String> {
     protected void onPostExecute(String result)
     {
         if(metadata != null) {
-            if (!wasCalledByHandler) {
-                Toast.makeText(context, metadata, Toast.LENGTH_SHORT).show();
-            }
             persistentActualPlayingSongData();
+            Utils.updateNotification(context);
+            switch(calledBy){
+                case user:
+                    Toast.makeText(context, metadata, Toast.LENGTH_SHORT).show();
+                    break;
+                case addToFavourites:
+                    addToFavourites();
+                    break;
+            }
         }
+    }
+
+    private void addToFavourites() {
+        Intent intent = new Intent(Constans.intentFilterMetadata);
+        intent.putExtra(Constans.addSongToFavourite, true);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
     private void persistentActualPlayingSongData() {

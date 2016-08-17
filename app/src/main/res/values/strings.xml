@@ -4,9 +4,9 @@
     <string name="app_name">AlsterRadio - corrected</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-
     <string name="settingsStreamQuality">Quality</string>
     <string name="settingsConnectionType">Connection Type</string>
     <string name="statistics">Statistics</string>
+    <string name="title_activity_show_favourite_songs">ShowFavouriteSongsActivity</string>
 
 </resources>

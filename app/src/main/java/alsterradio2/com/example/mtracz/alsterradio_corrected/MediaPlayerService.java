@@ -14,6 +14,7 @@ import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -262,7 +263,38 @@ public class MediaPlayerService extends Service{
             else
                 action= generateAction(R.drawable.ic_action_play, Constans.ACTION_START, Constans.ACTION_START);
             buildNotification(action);
+            sendBroadcastForLyrics();
         }
+    }
+
+    private void sendBroadcastForLyrics() {
+        Intent intent = new Intent();
+        intent.setAction("com.android.music.metachanged");
+        Bundle bundle = new Bundle();
+
+        // put the song's metadata
+        SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(this);
+        String wholeMetadata = sh.getString(Constans.actuallyPlayingSongKey, "");
+        String artist = wholeMetadata.substring(0, wholeMetadata.indexOf("-"));
+        String track = wholeMetadata.substring(wholeMetadata.indexOf("-") +1, wholeMetadata.length());
+        bundle.putString("track", track);
+        bundle.putString("artist", artist);
+        //bundle.putString("album", "Left of the Middle");
+
+        // put the song's total duration (in ms)
+        //bundle.putLong("duration", 0L); // 4:05
+
+        // put the song's current position
+        //bundle.putLong("position", 0L); // beginning of the song
+
+        // put the playback status
+        bundle.putBoolean("playing", true); // currently playing
+
+        // put your application's package
+        bundle.putString("scrobbling_source", "alsterradio2.com.example.mtracz.alsterradio_corrected");
+
+        intent.putExtras(bundle);
+        sendBroadcast(intent);
     }
 
 
@@ -294,7 +326,7 @@ public class MediaPlayerService extends Service{
         Notification.Builder builder = new Notification.Builder( this )
                 .setLargeIcon(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.alster_radio_128))
                 .setContentTitle(Utils.getActuallySelectedStreamName(getApplicationContext()))
-                .setContentText( Utils.getActuallyPlayingSong(getApplicationContext()))
+                .setContentText(Utils.getActuallyPlayingSong(getApplicationContext()))
                 .setStyle(style);
 
 

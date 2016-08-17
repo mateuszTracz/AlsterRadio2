@@ -33,4 +33,8 @@ public class Constans {
     public static String STORE_IN_DATABASE = "storeInDatabase";
 
     public static String actuallyPlayingSongKey = "actuallyPlayingSongKey";
+    public static String addSongToFavourite = "addSongToFavourite";
+    public static String intentFilterMetadata = "metadataTask";
+
+    public enum MetadataCalledBy {user, handler, addToFavourites}
 }

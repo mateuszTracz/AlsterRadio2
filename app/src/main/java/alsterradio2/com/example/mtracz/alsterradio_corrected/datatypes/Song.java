@@ -1,5 +1,7 @@
 package alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes;
 
+import java.util.Date;
+
 /**
  * Created by MTRACZ on 17.Jul.2016.
  */
@@ -47,5 +49,13 @@ public class Song {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDateAndTimePlayed()
+    {
+        String toReturn;
+        Date date = new Date(Long.parseLong(this.timestamp));
+        toReturn = date.toString();
+        return toReturn;
     }
 }

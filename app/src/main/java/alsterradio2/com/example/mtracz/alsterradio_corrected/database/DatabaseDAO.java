@@ -2,6 +2,8 @@ package alsterradio2.com.example.mtracz.alsterradio_corrected.database;
 
 import android.content.Context;
 
+import java.util.ArrayList;
+
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Bytes;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Song;
 
@@ -70,5 +72,12 @@ public class DatabaseDAO {
         String result = dbAdapter.getValueFrom(time);
         dbAdapter.close();
         return result;
+    }
+
+    public ArrayList<Song> getAllFavouriteSongs() {
+        dbAdapter.open();
+        ArrayList<Song> favouriteSongsList = dbAdapter.getAllSongs();
+        dbAdapter.close();
+        return favouriteSongsList;
     }
 }

@@ -7,9 +7,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Bytes;
+import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Song;
 
 /**
  * Created by mtracz on 09.Feb.2016.
@@ -137,6 +139,24 @@ public class DataDbAdapter {
     {
         String[] columns = {KEY_ID, KEY_BYTES};
         return db.query(DB_BYTES_TABLE, columns, null, null, null, null, null);
+    }
+
+    public ArrayList<Song> getAllSongs(){
+        String [] columns = {KEY_SONG_ID, KEY_SONG_TIMESTAMP, KEY_SONG_PLAYED_BY, KEY_SONG_TITLE};
+        ArrayList<Song> allFavouriteSongs = new ArrayList<>();
+        Cursor c = db.query(DB_FAVOURITE_SONGS_TABLE, columns, null, null, null, null, null);
+        if(c != null && c.moveToFirst())
+        {
+            do{
+                long id = Long.parseLong(c.getString(SONG_ID_COLUMN_NUMBER));
+                String timestamp = String.valueOf(c.getString(SONG_TIMESTAMP_COLUMN_NUMBER));
+                String playedBy = String.valueOf(c.getString(SONG_PLAYED_BY_COLUMN_NUMBER));
+                String title = String.valueOf(c.getString(SONG_TITLE_COLUMN_NUMBER));
+                Song song = new Song(id, timestamp, playedBy, title);
+                allFavouriteSongs.add(song);
+            }while(c.moveToNext());
+        }
+        return allFavouriteSongs;
     }
 
     public Bytes getBytesByID(long id) throws NumberFormatException

@@ -14,7 +14,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -23,15 +23,21 @@
         </activity>
         <activity
             android:name=".Settings"
-            android:label="@string/action_settings">
-         </activity>
+            android:label="@string/action_settings" >
+        </activity>
 
         <service android:name=".MediaPlayerService" />
-        <receiver android:name=".MusicIntentReceiver">
+
+        <receiver android:name=".MusicIntentReceiver" >
             <intent-filter>
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name=".ShowFavouriteSongsActivity"
+            android:label="@string/title_activity_show_favourite_songs" >
+        </activity>
     </application>
 
 </manifest>

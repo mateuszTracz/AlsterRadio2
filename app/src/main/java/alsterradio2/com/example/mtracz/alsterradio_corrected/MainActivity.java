@@ -31,6 +31,7 @@ import alsterradio2.com.example.mtracz.alsterradio_corrected.database.DatabaseDA
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Bytes;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.BytesMapper;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Constans;
+import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.Song;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.datatypes.TimeMapper;
 import alsterradio2.com.example.mtracz.alsterradio_corrected.utils.Utils;
 
@@ -182,8 +183,7 @@ public class MainActivity extends Activity {
         updatingMainNotificationRunnable = new Runnable() {
             @Override
             public void run() {
-                new GetMetadataTask(getApplicationContext(), true).execute(Utils.getActuallySelectedStreamURL(getApplicationContext()));
-                Utils.updateNotification(getApplicationContext());
+                new GetMetadataTask(getApplicationContext(), Constans.MetadataCalledBy.handler).execute(Utils.getActuallySelectedStreamURL(getApplicationContext()));
                 updatingMainNotificationHandler.postDelayed(this, frequencyOfUpdatingMainNotification*1000);
             }
         };
@@ -193,6 +193,7 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getStringExtra(Constans.keyToRecognizeAction).equals(Constans.handleButtonPlaying)) {
+                Log.d("hamdleHamdlersState", "callback from notification");
                 synchronizeButtonPlay();
                 handleHandlersState(intent);
             }
@@ -208,11 +209,27 @@ public class MainActivity extends Activity {
 
     };
 
+    private BroadcastReceiver receiverFromMetadataTask = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getBooleanExtra(Constans.addSongToFavourite, false) == true)
+            {
+                String timestamp = String.valueOf(Calendar.getInstance().getTimeInMillis());
+                String song = Utils.getActuallyPlayingSong(getApplicationContext());
+                String streamName = Utils.getActuallySelectedStreamName(getApplicationContext());
+                Song x = new Song(0, timestamp, streamName, song);
+                databaseDao.insertSong(x);
+                Toast.makeText(getApplicationContext(), "Added " + song + " to favourites", Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
     private void handleHandlersState(Intent intent) {
             if(intent.getStringExtra(Constans.broadCastKey).equals(Constans.ACTION_START)) {
                 if(MediaPlayerProperties.getInstance().isTimerStarted()) {
                     timeHandler.removeCallbacks(timeRunnable);
                     MediaPlayerProperties.getInstance().setTimerStarted(false);
+                    Log.d("handleHandlersState", Constans.ACTION_START);
                 }
 
             }
@@ -220,6 +237,7 @@ public class MainActivity extends Activity {
                 if(!MediaPlayerProperties.getInstance().isTimerStarted()) {
                     timeHandler.postDelayed(timeRunnable, 1000);
                     MediaPlayerProperties.getInstance().setTimerStarted(true);
+                    Log.d("handleHandlersState", Constans.ACTION_STOP);
                 }
 
             }
@@ -309,13 +327,18 @@ public class MainActivity extends Activity {
         }
         if(id == R.id.streamData)
         {
-            new GetMetadataTask(getApplicationContext(), false).execute(Utils.getActuallySelectedStreamURL(getApplicationContext()));
+            new GetMetadataTask(getApplicationContext(), Constans.MetadataCalledBy.user).execute(Utils.getActuallySelectedStreamURL(getApplicationContext()));
         }
         if(id == R.id.closeApp)
         {
             Utils.stopPlaying(getApplicationContext());
             this.finish();
             System.exit(0);
+        }
+        if(id == R.id.showFavouriteSongs)
+        {
+            Intent startShowFavouriteSongsActivity = new Intent(this, ShowFavouriteSongsActivity.class);
+            startActivity(startShowFavouriteSongsActivity);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -327,6 +350,11 @@ public class MainActivity extends Activity {
             play();
         else
             stop();
+    }
+
+    public void addSongToFavourite(View view){
+        new GetMetadataTask(getApplicationContext(), Constans.MetadataCalledBy.addToFavourites).execute(Utils.getActuallySelectedStreamURL(getApplicationContext()));
+
     }
 
     public void play()
@@ -457,6 +485,7 @@ public class MainActivity extends Activity {
         synchronizeValuesFromSettings();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver, new IntentFilter("mediaPlayerService"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiverFromMetadataTask, new IntentFilter(Constans.intentFilterMetadata));
 
         super.onResume();
     }
@@ -478,6 +507,7 @@ public class MainActivity extends Activity {
     {
         databaseDao.insertBytes(new Bytes(1, summaryBytesCount + bytesUsedAtTheMoment, Calendar.getInstance().getTimeInMillis(), Constans.ACTION_STOP));
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(receiverFromMetadataTask);
         Log.d("lifecycle", "onStop");
         super.onStop();
     }

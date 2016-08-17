@@ -49,7 +49,8 @@
         android:id="@+id/buttonAddSongToFavourite"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:background="@drawable/ic_favorite_black_24dp" />
+        android:background="@drawable/ic_favorite_black_24dp"
+        android:onClick="addSongToFavourite"/>
 
 
 </RelativeLayout>

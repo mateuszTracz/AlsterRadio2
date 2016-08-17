@@ -14,9 +14,12 @@
 
     <item
         android:id="@+id/streamData"
-        android:title="Metadata"
+        android:title="Metadata" />
 
-        />
+   <item
+       android:id="@+id/showFavouriteSongs"
+       android:title="Show Favourite Songs" />
+
     <item
         android:id="@+id/statistics"
         android:title="Statistics"
