@@ -20,6 +20,10 @@ public class MediaPlayerProperties {
     private boolean isTimerStarted=false;
     private int numberOfClicks = 0;
 
+    private MediaPlayerProperties() {
+
+    }
+
     public static MediaPlayerProperties getInstance(){
         if (instance == null) {
             instance = new MediaPlayerProperties();

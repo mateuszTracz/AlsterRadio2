@@ -69,7 +69,6 @@ public class MediaPlayerService extends Service{
         sendBroadcastForDisablindButtonPlay();
 
         MediaPlayerProperties.getInstance().setIsPlaying(true);
-        Utils.increaseNumberOfClicks();
         MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled(true);
 
 
@@ -80,6 +79,7 @@ public class MediaPlayerService extends Service{
 
         int result = am.requestAudioFocus(amAudioFocus, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            Utils.increaseNumberOfClicks();
             mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 
             wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
