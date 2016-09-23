@@ -432,21 +432,6 @@ public class MainActivity extends Activity {
         return sh.getString("connectionType", "error");
     }
 
-    private void changeButtonPlayState()
-    {
-        if(isPlaying())
-        {
-            buttonPlay.setText("PLAY");
-            setIsPlaying(false);
-        }
-        else
-        {
-            buttonPlay.setText("STOP");
-            setIsPlaying(true);
-        }
-        Utils.increaseNumberOfClicks();
-    }
-
     public void onSaveInstanceState(Bundle bundle)
     {
         Log.d("onSaveInstanceState", "called");

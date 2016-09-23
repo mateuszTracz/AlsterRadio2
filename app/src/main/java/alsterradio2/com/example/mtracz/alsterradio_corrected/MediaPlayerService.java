@@ -66,12 +66,11 @@ public class MediaPlayerService extends Service{
     }
 
     public void play() {
-        sendBroadcastForDisablindButtonPlay();
+        sendBroadcastForDisablindOrEnablingButtonPlay(Constans.DISABLE);
 
         MediaPlayerProperties.getInstance().setIsPlaying(true);
-        MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled(true);
 
-
+        Utils.increaseNumberOfClicks();
         mMediaPlayer = setApproriateStreamSource(mMediaPlayer);
         mMediaPlayer.prepareAsync();
 
@@ -79,7 +78,6 @@ public class MediaPlayerService extends Service{
 
         int result = am.requestAudioFocus(amAudioFocus, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            Utils.increaseNumberOfClicks();
             mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 
             wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
@@ -91,12 +89,7 @@ public class MediaPlayerService extends Service{
                 @Override
                 public void onPrepared(MediaPlayer mp) {
                     mp.start();
-
-                    Intent intentForEnablingButtonPlay = new Intent("mediaPlayerService");
-                    intentForEnablingButtonPlay.putExtra(Constans.keyToRecognizeAction, Constans.CHANGE_BUTTON_PLAY_STATE);
-                    intentForEnablingButtonPlay.putExtra(Constans.CHANGE_BUTTON_PLAY_STATE, Constans.ENABLE);
-                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intentForEnablingButtonPlay); // enable buuton Play
-                    MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled(false);
+                    sendBroadcastForDisablindOrEnablingButtonPlay(Constans.ENABLE);
                 }
             });
             mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
@@ -125,11 +118,17 @@ public class MediaPlayerService extends Service{
         }
     }
 
-    private void sendBroadcastForDisablindButtonPlay() {
+    private void sendBroadcastForDisablindOrEnablingButtonPlay(String enableOrDisable) {
         Intent intentForDisableButtonPlay = new Intent("mediaPlayerService");
         intentForDisableButtonPlay.putExtra(Constans.keyToRecognizeAction, Constans.CHANGE_BUTTON_PLAY_STATE); // change editability of button Play
-        intentForDisableButtonPlay.putExtra(Constans.CHANGE_BUTTON_PLAY_STATE, Constans.DISABLE);
+        intentForDisableButtonPlay.putExtra(Constans.CHANGE_BUTTON_PLAY_STATE, enableOrDisable);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intentForDisableButtonPlay);
+        if(enableOrDisable.contains(Constans.DISABLE)){
+            MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled(true);
+        }
+        else{
+            MediaPlayerProperties.getInstance().shouldButtonPlayBeDisabled(false);
+        }
     }
 
     private void cancelNotification(int i) {
