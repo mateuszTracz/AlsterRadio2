@@ -2,6 +2,7 @@ package alsterradio2.com.example.mtracz.alsterradio_corrected;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -332,6 +333,8 @@ public class MainActivity extends Activity {
         if(id == R.id.closeApp)
         {
             Utils.stopPlaying(getApplicationContext());
+            NotificationManager notificationManager = (NotificationManager) getSystemService( Context.NOTIFICATION_SERVICE );
+            notificationManager.cancel(Constans.notificationId);
             this.finish();
             System.exit(0);
         }
