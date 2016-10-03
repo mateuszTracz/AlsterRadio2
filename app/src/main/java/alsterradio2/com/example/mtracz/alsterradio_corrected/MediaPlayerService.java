@@ -168,6 +168,7 @@ public class MediaPlayerService extends Service{
         SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = sh.edit();
         Set<String> stringSet = sh.getStringSet(whichSet, new HashSet<String>());
+        stringSet.add(line);
         editor.putStringSet(whichSet, stringSet);
         editor.commit();
     }
